@@ -93,14 +93,14 @@ open class ButtonBarPagerTabStripViewController: PagerTabStripViewController, Pa
 
     open override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         var bundle = Bundle(for: ButtonBarViewCell.self)
         if let resourcePath = bundle.path(forResource: "XLPagerTabStrip", ofType: "bundle") {
             if let resourcesBundle = Bundle(path: resourcePath) {
                 bundle = resourcesBundle
             }
         }
-        
+
         buttonBarItemSpec = .nibFile(nibName: "ButtonCell", bundle: bundle, width: { [weak self] (childItemInfo) -> CGFloat in
                 let label = UILabel()
                 label.translatesAutoresizingMaskIntoConstraints = false
@@ -170,23 +170,25 @@ open class ButtonBarPagerTabStripViewController: PagerTabStripViewController, Pa
 
         guard isViewAppearing || isViewRotating else { return }
 
-        // Force the UICollectionViewFlowLayout to get laid out again with the new size if
-        // a) The view is appearing.  This ensures that
-        //    collectionView:layout:sizeForItemAtIndexPath: is called for a second time
-        //    when the view is shown and when the view *frame(s)* are actually set
-        //    (we need the view frame's to have been set to work out the size's and on the
-        //    first call to collectionView:layout:sizeForItemAtIndexPath: the view frame(s)
-        //    aren't set correctly)
-        // b) The view is rotating.  This ensures that
-        //    collectionView:layout:sizeForItemAtIndexPath: is called again and can use the views
-        //    *new* frame so that the buttonBarView cell's actually get resized correctly
-        cachedCellWidths = calculateWidths()
-        buttonBarView.collectionViewLayout.invalidateLayout()
-        // When the view first appears or is rotated we also need to ensure that the barButtonView's
-        // selectedBar is resized and its contentOffset/scroll is set correctly (the selected
-        // tab/cell may end up either skewed or off screen after a rotation otherwise)
-        buttonBarView.moveTo(index: currentIndex, animated: false, swipeDirection: .none, pagerScroll: .scrollOnlyIfOutOfScreen)
-        buttonBarView.selectItem(at: IndexPath(item: currentIndex, section: 0), animated: false, scrollPosition: [])
+        DispatchQueue.main.async {
+            // Force the UICollectionViewFlowLayout to get laid out again with the new size if
+            // a) The view is appearing.  This ensures that
+            //    collectionView:layout:sizeForItemAtIndexPath: is called for a second time
+            //    when the view is shown and when the view *frame(s)* are actually set
+            //    (we need the view frame's to have been set to work out the size's and on the
+            //    first call to collectionView:layout:sizeForItemAtIndexPath: the view frame(s)
+            //    aren't set correctly)
+            // b) The view is rotating.  This ensures that
+            //    collectionView:layout:sizeForItemAtIndexPath: is called again and can use the views
+            //    *new* frame so that the buttonBarView cell's actually get resized correctly
+            self.cachedCellWidths = self.calculateWidths()
+            self.buttonBarView.collectionViewLayout.invalidateLayout()
+            // When the view first appears or is rotated we also need to ensure that the barButtonView's
+            // selectedBar is resized and its contentOffset/scroll is set correctly (the selected
+            // tab/cell may end up either skewed or off screen after a rotation otherwise)
+            self.buttonBarView.moveTo(index: self.currentIndex, animated: false, swipeDirection: .none, pagerScroll: .scrollOnlyIfOutOfScreen)
+            self.buttonBarView.selectItem(at: IndexPath(item: self.currentIndex, section: 0), animated: false, scrollPosition: [])
+        }
     }
 
     // MARK: - Public Methods
